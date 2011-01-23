@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript" src="json.js"></script>
+<script>
+function fail_global_method() {
+	//Using WindowObject
+	var lc = window.localcall;
+	lc.getString("Motherfucker!");//here i lost!
+}
+
+function fail_global_attribute() {
+	//Using WindowObject
+	var lc = window.localcall;
+	alert(lc.test);
+    lc.func_name = "hello_world";
+    lc.send;
+    alert(lc.result);
+}
+
+function ajax_call(url, callback) {
+	//The XMLHttpRequest.open does not call shouldStartLoadWithRequest delegate
+	var xml_http = new XMLHttpRequest();
+	xml_http.onreadystatechange = function() {
+		if(xml_http.readyState == 4) {
+			var response = xml_http.responseText.parseJSON();
+			callback(response.result);
+		}
+	}
+	xml_http.open('GET', url);
+	xml_http.send(null);
+}
+/*
+var ifrmobj;
+function iframe(url) {
+	//失败，因为会在新页中加载
+	var ifrm = document.createElement( "iframe" );
+    //ifrm.id = "ifm";
+	ifrm.setAttribute( "id", "localcall_iframe" );
+    //ifrm.style.display = "none";
+    //ifrm.style.visibility = "hidden";
+    ifrm.style.width = "0px";
+    ifrm.style.height = "0px";
+	ifrm.style.border = "0px";
+	ifrmobj = document.body.appendChild( ifrm );
+	//ifrmobj.src = 'localcall://hello_world/';
+	ifrmdoc = ifrmobj.contentDocument; 
+	ifrmdoc.location.replace( url );
+	//ifrmobj.src = 'localcall://hello_world/';
+	return false;
+}
+
+function try_script_tag(url) {
+	var temp_script = document.createElement( "script" );
+	temp_script.type = "text/javascript"
+	temp_script.src = url;
+	script = document.getElementsByTagName("head")[0].appendChild( temp_script );
+	return true;
+}
+*/
+function server_callback(url) {
+	window.location.href = url;
+	return false;
+}
+
+
+function LocalCallWithAjax(name, argument, callback) {
+	var argument_s = argument.toJSONString();
+	//alert(argument_s);
+	var url = "http://localcall/" + name + "?argument=" + argument_s;
+	if (callback) {
+		var result = ajax_call(url, callback);
+	}
+}
+
+function LocalCallWithServerCallback(name, argument, callback) {
+	var argument_s = argument.toJSONString();
+	//alert(argument_s);
+	var url = "http://localcall/" + name + "?argument=" + argument_s;
+	
+	if (callback) {
+		var handle_response = function(response) {
+			//var r = response.parseJSON()
+			var result = response.result;
+			//alert(result);
+			callback(result);
+		}
+
+	} else {
+		var handle_response = function(response) {
+			//var r = response.parseJSON()
+			var result = response.result;
+		}
+	}
+	window.handle_response = handle_response;
+	server_callback(url);
+	return true;
+}
+
+</script>
+
+</head>
+<body>
+<input type="button" value="ajax" onclick="LocalCallWithAjax('hello', {'name': 'linluxiang'}, alert)">
+<input type="button" value="callback" onclick="LocalCallWithServerCallback('hello', {'name': 'linluxiang'}, alert)">
+</body>
+</html>
